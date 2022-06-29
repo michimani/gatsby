@@ -35,18 +35,20 @@ function PageRenderer(props) {
     }
   )
 
-  const pageComponent = props.pageResources.component
+  const headComponent = props.pageResources.head.Head
 
-  if (pageComponent.head) {
-    if (typeof pageComponent.head !== `function`)
+  console.log({ x: props.pageResources })
+
+  if (headComponent) {
+    if (typeof headComponent !== `function`)
       throw new Error(
-        `Expected "head" export to be a function got "${typeof pageComponent.head}".`
+        `Expected "head" export to be a function got "${typeof headComponent}".`
       )
 
     const headElement = createElement(
       StaticQueryContext.Provider,
       { value: props.pageResources.staticQueryResults },
-      createElement(pageComponent.head, _props, null)
+      createElement(headComponent, _props, null)
     )
 
     const { render } = reactDOMUtils()
@@ -54,18 +56,23 @@ function PageRenderer(props) {
     useEffect(() => {
       const hiddenRoot = document.createElement(`div`)
 
+      console.log({ hiddenRoot })
+      document.body.append(hiddenRoot)
+
       const callback = () => {
         // Remove previous head nodes
         const prevHeadNodes = [
-          ...document.querySelectorAll(`[data-gatsby-head]`),
+          ...document.head.querySelectorAll(`[data-gatsby-head]`),
         ]
-        prevHeadNodes.forEach(e => e.remove())
+        // prevHeadNodes.forEach(e => e.remove())
 
         // add attribute to new head nodes while showing warning if it's not a valid node
         const validHeadNodes = []
 
         for (const node of hiddenRoot.childNodes) {
           const nodeName = node.nodeName.toLowerCase()
+
+          console.log({ node })
 
           if (!VALID_NODE_NAMES.includes(nodeName)) {
             if (process.env.NODE_ENV !== `production`) {
@@ -79,7 +86,7 @@ function PageRenderer(props) {
             }
           } else {
             node.setAttribute(`data-gatsby-head`, true)
-            validHeadNodes.push(node)
+            validHeadNodes.push(node.cloneNode(true))
           }
         }
 
